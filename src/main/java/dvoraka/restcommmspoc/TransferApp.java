@@ -20,9 +20,7 @@ public class TransferApp {
     @Bean
     public CommandLineRunner runner() {
         return args -> {
-            System.out.println("App");
-
-            clientService.send("a");
+            clientService.send("Hello");
         };
     }
 }

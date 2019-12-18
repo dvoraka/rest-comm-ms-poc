@@ -22,7 +22,7 @@ public class DefaultRestClientTransferService extends AbstractBaseService implem
 
     public void send(String data) {
 
-        TransferMessage request = new TransferMessage();
+        TransferMessage request = new TransferMessage(data);
 
         ResponseEntity<TransferResponseMessage> response = restTemplate.postForEntity(
                 "/save",
