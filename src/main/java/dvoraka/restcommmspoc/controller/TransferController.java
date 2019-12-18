@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class TransferController {
 
-    @PostMapping
+    @PostMapping("/save")
     public void save(@RequestBody TransferMessage message) {
         log.warn("Save: {}", message.getData());
     }
