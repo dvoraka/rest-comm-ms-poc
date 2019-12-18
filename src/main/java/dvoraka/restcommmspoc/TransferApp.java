@@ -1,14 +1,18 @@
 package dvoraka.restcommmspoc;
 
+import dvoraka.restcommmspoc.service.DefaultRestClientTransferService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.SpringBootConfiguration;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
-@SpringBootConfiguration
-@EnableAutoConfiguration
+@SpringBootApplication
 public class TransferApp {
+
+    @Autowired
+    private DefaultRestClientTransferService clientService;
+
     public static void main(String[] args) {
         SpringApplication.run(TransferApp.class, args);
     }
@@ -17,6 +21,8 @@ public class TransferApp {
     public CommandLineRunner runner() {
         return args -> {
             System.out.println("App");
+
+            clientService.send("a");
         };
     }
 }
