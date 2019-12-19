@@ -24,6 +24,15 @@ public class DefaultRestClientTransferService extends AbstractBaseService implem
 
     public void send(String data) throws NetworkException {
         TransferMessage request = new TransferMessage(data);
+        sendRequest(request);
+    }
+
+    public void send(byte[] data) throws NetworkException {
+        TransferMessage request = new TransferMessage(data);
+        sendRequest(request);
+    }
+
+    private void sendRequest(TransferMessage request) throws NetworkException {
         try {
             ResponseEntity<TransferResponseMessage> response = restTemplate.postForEntity(
                     "/save",
