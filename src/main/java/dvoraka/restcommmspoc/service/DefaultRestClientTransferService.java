@@ -66,21 +66,25 @@ public class DefaultRestClientTransferService extends AbstractBaseService implem
         }
     }
 
+    @Override
     public void send(String data) throws NetworkException {
         TransferMessage request = new TransferMessage(data);
         sendRequest(request);
     }
 
+    @Override
     public void send(byte[] data) throws NetworkException {
         TransferMessage request = new TransferMessage(data);
         sendRequest(request);
     }
 
+    @Override
     public void sendAsync(String data) {
         TransferMessage request = new TransferMessage(data);
         saveMessage(request);
     }
 
+    @Override
     public void sendAsync(byte[] data) {
         TransferMessage request = new TransferMessage(data);
         saveMessage(request);
