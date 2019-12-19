@@ -15,6 +15,7 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.File;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -29,6 +30,8 @@ public class DefaultRestClientTransferService extends AbstractBaseService implem
 
     private final RestTemplate restTemplate;
 
+    public static final String FS_QUEUE_NAME = "queue";
+
     private final BlockingQueue<TransferMessage> waitingMessages;
     private final ExecutorService asyncService;
 
@@ -38,13 +41,18 @@ public class DefaultRestClientTransferService extends AbstractBaseService implem
     @Autowired
     public DefaultRestClientTransferService(RestTemplate restTemplate) {
         this.restTemplate = requireNonNull(restTemplate);
-        waitingMessages = new ArrayBlockingQueue<>(10);
+        waitingMessages = new ArrayBlockingQueue<>(100);
         asyncService = Executors.newSingleThreadExecutor();
     }
 
     @PostConstruct
     public void start() {
         running = true;
+        try {
+            loadQueue();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         asyncService.execute(this::asyncLoop);
     }
 
@@ -106,6 +114,11 @@ public class DefaultRestClientTransferService extends AbstractBaseService implem
 
     private void asyncLoop() {
         log.info("Async loop started.");
+        try {
+            TimeUnit.SECONDS.sleep(2);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         while (running) {
             try {
                 TransferMessage message = waitingMessages.take();
@@ -125,7 +138,7 @@ public class DefaultRestClientTransferService extends AbstractBaseService implem
 
     private void storeQueue() throws IOException {
 
-        File file = new File("queue");
+        File file = new File(FS_QUEUE_NAME);
         QueueFile queueFile = new QueueFile.Builder(file)
                 .build();
 
@@ -141,5 +154,23 @@ public class DefaultRestClientTransferService extends AbstractBaseService implem
             }
         }
         log.info("Stored {} messages", messageCount);
+    }
+
+    private void loadQueue() throws IOException {
+
+        File file = new File(FS_QUEUE_NAME);
+        QueueFile queueFile = new QueueFile.Builder(file)
+                .build();
+
+        int messageCount = 0;
+        Iterator<byte[]> iterator = queueFile.iterator();
+        while (iterator.hasNext()) {
+            log.debug("Loading message...");
+            byte[] element = iterator.next();
+            messageCount++;
+            saveMessage(new TransferMessage(element));
+            iterator.remove();
+        }
+        log.info("Loaded {} messages", messageCount);
     }
 }
