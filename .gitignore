@@ -1,2 +1,7 @@
 .idea/
 *.iml
+
+target/
+
+# queue filename
+queue
