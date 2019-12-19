@@ -21,6 +21,8 @@ public class TransferApp {
     public CommandLineRunner runner() {
         return args -> {
             clientService.send("Hello");
+            clientService.sendAsync("BBBB");
+            clientService.sendAsync("CCCCC");
         };
     }
 }

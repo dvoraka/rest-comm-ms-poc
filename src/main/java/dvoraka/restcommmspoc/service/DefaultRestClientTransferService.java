@@ -1,5 +1,6 @@
 package dvoraka.restcommmspoc.service;
 
+import com.squareup.tape2.QueueFile;
 import dvoraka.restcommmspoc.data.message.TransferMessage;
 import dvoraka.restcommmspoc.data.message.TransferResponseMessage;
 import dvoraka.restcommmspoc.exception.NetworkException;
@@ -11,6 +12,9 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import java.io.File;
+import java.io.IOException;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -44,6 +48,16 @@ public class DefaultRestClientTransferService extends AbstractBaseService implem
         asyncService.execute(this::asyncLoop);
     }
 
+    @PreDestroy
+    public void stop() {
+        running = false;
+        try {
+            storeQueue();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public void send(String data) throws NetworkException {
         TransferMessage request = new TransferMessage(data);
         sendRequest(request);
@@ -56,12 +70,12 @@ public class DefaultRestClientTransferService extends AbstractBaseService implem
 
     public void sendAsync(String data) {
         TransferMessage request = new TransferMessage(data);
-        waitingMessages.add(request);
+        saveMessage(request);
     }
 
     public void sendAsync(byte[] data) {
         TransferMessage request = new TransferMessage(data);
-        waitingMessages.add(request);
+        saveMessage(request);
     }
 
     private void sendRequest(TransferMessage request) throws NetworkException {
@@ -86,7 +100,7 @@ public class DefaultRestClientTransferService extends AbstractBaseService implem
             );
         } catch (RestClientException e) {
             e.printStackTrace();
-            waitingMessages.add(request);
+            saveMessage(request);
         }
     }
 
@@ -102,5 +116,30 @@ public class DefaultRestClientTransferService extends AbstractBaseService implem
             }
         }
         log.info("Async loop done.");
+    }
+
+    private void saveMessage(TransferMessage message) {
+        log.debug("Saving message...");
+        waitingMessages.add(message);
+    }
+
+    private void storeQueue() throws IOException {
+
+        File file = new File("queue");
+        QueueFile queueFile = new QueueFile.Builder(file)
+                .build();
+
+        int messageCount = 0;
+        while (!waitingMessages.isEmpty()) {
+            try {
+                TransferMessage message = waitingMessages.take();
+                log.debug("Storing message...");
+                queueFile.add(message.getData());
+                messageCount++;
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        log.info("Stored {} messages", messageCount);
     }
 }
