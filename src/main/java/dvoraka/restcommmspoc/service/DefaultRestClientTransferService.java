@@ -56,12 +56,12 @@ public class DefaultRestClientTransferService extends AbstractBaseService implem
 
     public void sendAsync(String data) {
         TransferMessage request = new TransferMessage(data);
-        try {
-            sendRequest(request);
-        } catch (NetworkException e) {
-            e.printStackTrace();
-            waitingMessages.add(request);
-        }
+        waitingMessages.add(request);
+    }
+
+    public void sendAsync(byte[] data) {
+        TransferMessage request = new TransferMessage(data);
+        waitingMessages.add(request);
     }
 
     private void sendRequest(TransferMessage request) throws NetworkException {
@@ -77,16 +77,27 @@ public class DefaultRestClientTransferService extends AbstractBaseService implem
         }
     }
 
+    private void sendRequestAsync(TransferMessage request) {
+        try {
+            restTemplate.postForEntity(
+                    "/save",
+                    request,
+                    TransferResponseMessage.class
+            );
+        } catch (RestClientException e) {
+            e.printStackTrace();
+            waitingMessages.add(request);
+        }
+    }
+
     private void asyncLoop() {
         log.info("Async loop started.");
         while (running) {
             try {
                 TransferMessage message = waitingMessages.take();
-                sendRequest(message);
+                sendRequestAsync(message);
                 TimeUnit.SECONDS.sleep(1);
             } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (NetworkException e) {
                 e.printStackTrace();
             }
         }
