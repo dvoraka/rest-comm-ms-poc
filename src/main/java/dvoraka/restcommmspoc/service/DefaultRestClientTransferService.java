@@ -1,6 +1,7 @@
 package dvoraka.restcommmspoc.service;
 
 import com.squareup.tape2.QueueFile;
+import dvoraka.restcommmspoc.controller.ControllerConstants;
 import dvoraka.restcommmspoc.data.message.TransferMessage;
 import dvoraka.restcommmspoc.data.message.TransferResponseMessage;
 import dvoraka.restcommmspoc.exception.NetworkException;
@@ -93,7 +94,7 @@ public class DefaultRestClientTransferService extends AbstractBaseService implem
     private void sendRequest(TransferMessage request) throws NetworkException {
         try {
             ResponseEntity<TransferResponseMessage> response = restTemplate.postForEntity(
-                    "/save",
+                    ControllerConstants.SAVE_PATH,
                     request,
                     TransferResponseMessage.class
             );

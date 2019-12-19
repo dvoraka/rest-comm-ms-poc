@@ -12,7 +12,7 @@ import java.nio.charset.StandardCharsets;
 @RestController
 public class TransferController {
 
-    @PostMapping("/save")
+    @PostMapping(ControllerConstants.SAVE_PATH)
     public void save(@RequestBody TransferMessage message) {
         log.warn("Save: {}", new String(message.getData(), StandardCharsets.UTF_8));
     }
