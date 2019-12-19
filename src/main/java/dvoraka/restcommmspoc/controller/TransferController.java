@@ -2,7 +2,7 @@ package dvoraka.restcommmspoc.controller;
 
 import dvoraka.restcommmspoc.data.message.TransferMessage;
 import dvoraka.restcommmspoc.service.RestServerTransferService;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -12,10 +12,10 @@ import java.nio.charset.StandardCharsets;
 
 import static java.util.Objects.requireNonNull;
 
-@Slf4j
 @RestController
 public class TransferController {
 
+    private static final Logger log = org.slf4j.LoggerFactory.getLogger(TransferController.class);
     private final RestServerTransferService service;
 
 

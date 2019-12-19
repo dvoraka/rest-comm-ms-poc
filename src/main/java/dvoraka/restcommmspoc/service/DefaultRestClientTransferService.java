@@ -5,7 +5,7 @@ import dvoraka.restcommmspoc.controller.ControllerConstants;
 import dvoraka.restcommmspoc.data.message.TransferMessage;
 import dvoraka.restcommmspoc.data.message.TransferResponseMessage;
 import dvoraka.restcommmspoc.exception.NetworkException;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -25,10 +25,10 @@ import java.util.concurrent.TimeUnit;
 
 import static java.util.Objects.requireNonNull;
 
-@Slf4j
 @Service
 public class DefaultRestClientTransferService extends AbstractBaseService implements RestClientTransferService {
 
+    private static final Logger log = org.slf4j.LoggerFactory.getLogger(DefaultRestClientTransferService.class);
     private final RestTemplate restTemplate;
 
     public static final String FS_QUEUE_NAME = "queue";

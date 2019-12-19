@@ -1,9 +1,5 @@
 package dvoraka.restcommmspoc.configuration;
 
-import dvoraka.restcommmspoc.service.DefaultRestClientTransferService;
-import dvoraka.restcommmspoc.service.DefaultRestServerTransferService;
-import dvoraka.restcommmspoc.service.RestClientTransferService;
-import dvoraka.restcommmspoc.service.RestServerTransferService;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
