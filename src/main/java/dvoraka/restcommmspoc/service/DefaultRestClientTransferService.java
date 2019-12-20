@@ -16,9 +16,6 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.File;
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -33,7 +30,6 @@ public class DefaultRestClientTransferService extends AbstractBaseService implem
 
     public static final String FS_QUEUE_NAME = "queue";
 
-    private final BlockingQueue<TransferMessage> waitingMessages;
     private final ExecutorService asyncService;
 
     private final QueueFile queueFile;
@@ -44,7 +40,6 @@ public class DefaultRestClientTransferService extends AbstractBaseService implem
     @Autowired
     public DefaultRestClientTransferService(RestTemplate restTemplate) throws IOException {
         this.restTemplate = requireNonNull(restTemplate);
-        waitingMessages = new ArrayBlockingQueue<>(100);
         asyncService = Executors.newSingleThreadExecutor();
 
         File file = new File(FS_QUEUE_NAME);
@@ -55,22 +50,12 @@ public class DefaultRestClientTransferService extends AbstractBaseService implem
     @PostConstruct
     public void start() {
         running = true;
-//        try {
-//            loadQueue();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
         asyncService.execute(this::asyncLoop);
     }
 
     @PreDestroy
     public void stop() {
         running = false;
-        try {
-            storeQueue();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     @Override
@@ -88,14 +73,12 @@ public class DefaultRestClientTransferService extends AbstractBaseService implem
     @Override
     public void sendAsync(String data) {
         TransferMessage request = new TransferMessage(data);
-//        saveMessage(request);
         storeMessage(request);
     }
 
     @Override
     public void sendAsync(byte[] data) {
         TransferMessage request = new TransferMessage(data);
-//        saveMessage(request);
         storeMessage(request);
     }
 
@@ -122,7 +105,6 @@ public class DefaultRestClientTransferService extends AbstractBaseService implem
         } catch (RestClientException e) {
             e.printStackTrace();
             storeMessage(request);
-//            saveMessage(request);
         }
     }
 
@@ -135,7 +117,6 @@ public class DefaultRestClientTransferService extends AbstractBaseService implem
         }
         while (running) {
             try {
-//                TransferMessage message = waitingMessages.take();
                 byte[] data = queueFile.peek();
                 if (data == null) {
                     continue;
@@ -152,11 +133,6 @@ public class DefaultRestClientTransferService extends AbstractBaseService implem
         log.info("Async loop done.");
     }
 
-    private void saveMessage(TransferMessage message) {
-        log.debug("Saving message...");
-        waitingMessages.add(message);
-    }
-
     private void storeMessage(TransferMessage message) {
         log.debug("Storing message...");
         try {
@@ -164,43 +140,5 @@ public class DefaultRestClientTransferService extends AbstractBaseService implem
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    private void storeQueue() throws IOException {
-
-//        File file = new File(FS_QUEUE_NAME);
-//        QueueFile queueFile = new QueueFile.Builder(file)
-//                .build();
-
-        int messageCount = 0;
-        while (!waitingMessages.isEmpty()) {
-            try {
-                TransferMessage message = waitingMessages.take();
-                log.debug("Storing message...");
-                queueFile.add(message.getData());
-                messageCount++;
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-        log.info("Stored {} messages", messageCount);
-    }
-
-    private void loadQueue() throws IOException {
-
-        File file = new File(FS_QUEUE_NAME);
-        QueueFile queueFile = new QueueFile.Builder(file)
-                .build();
-
-        int messageCount = 0;
-        Iterator<byte[]> iterator = queueFile.iterator();
-        while (iterator.hasNext()) {
-            log.debug("Loading message...");
-            byte[] element = iterator.next();
-            messageCount++;
-            saveMessage(new TransferMessage(element));
-            iterator.remove();
-        }
-        log.info("Loaded {} messages", messageCount);
     }
 }
