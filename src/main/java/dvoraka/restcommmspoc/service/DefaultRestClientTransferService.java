@@ -36,24 +36,30 @@ public class DefaultRestClientTransferService extends AbstractBaseService implem
     private final BlockingQueue<TransferMessage> waitingMessages;
     private final ExecutorService asyncService;
 
+    private final QueueFile queueFile;
+
     private volatile boolean running;
 
 
     @Autowired
-    public DefaultRestClientTransferService(RestTemplate restTemplate) {
+    public DefaultRestClientTransferService(RestTemplate restTemplate) throws IOException {
         this.restTemplate = requireNonNull(restTemplate);
         waitingMessages = new ArrayBlockingQueue<>(100);
         asyncService = Executors.newSingleThreadExecutor();
+
+        File file = new File(FS_QUEUE_NAME);
+        queueFile = new QueueFile.Builder(file)
+                .build();
     }
 
     @PostConstruct
     public void start() {
         running = true;
-        try {
-            loadQueue();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            loadQueue();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
         asyncService.execute(this::asyncLoop);
     }
 
@@ -82,13 +88,15 @@ public class DefaultRestClientTransferService extends AbstractBaseService implem
     @Override
     public void sendAsync(String data) {
         TransferMessage request = new TransferMessage(data);
-        saveMessage(request);
+//        saveMessage(request);
+        storeMessage(request);
     }
 
     @Override
     public void sendAsync(byte[] data) {
         TransferMessage request = new TransferMessage(data);
-        saveMessage(request);
+//        saveMessage(request);
+        storeMessage(request);
     }
 
     private void sendRequest(TransferMessage request) throws NetworkException {
@@ -113,7 +121,8 @@ public class DefaultRestClientTransferService extends AbstractBaseService implem
             );
         } catch (RestClientException e) {
             e.printStackTrace();
-            saveMessage(request);
+            storeMessage(request);
+//            saveMessage(request);
         }
     }
 
@@ -126,10 +135,17 @@ public class DefaultRestClientTransferService extends AbstractBaseService implem
         }
         while (running) {
             try {
-                TransferMessage message = waitingMessages.take();
-                sendRequestAsync(message);
+//                TransferMessage message = waitingMessages.take();
+                byte[] data = queueFile.peek();
+                if (data == null) {
+                    continue;
+                } else {
+                    queueFile.remove();
+                }
+
+                sendRequestAsync(new TransferMessage(data));
                 TimeUnit.SECONDS.sleep(1);
-            } catch (InterruptedException e) {
+            } catch (InterruptedException | IOException e) {
                 e.printStackTrace();
             }
         }
@@ -141,11 +157,20 @@ public class DefaultRestClientTransferService extends AbstractBaseService implem
         waitingMessages.add(message);
     }
 
+    private void storeMessage(TransferMessage message) {
+        log.debug("Storing message...");
+        try {
+            queueFile.add(message.getData());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     private void storeQueue() throws IOException {
 
-        File file = new File(FS_QUEUE_NAME);
-        QueueFile queueFile = new QueueFile.Builder(file)
-                .build();
+//        File file = new File(FS_QUEUE_NAME);
+//        QueueFile queueFile = new QueueFile.Builder(file)
+//                .build();
 
         int messageCount = 0;
         while (!waitingMessages.isEmpty()) {
