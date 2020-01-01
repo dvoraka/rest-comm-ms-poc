@@ -2,6 +2,7 @@ package dvoraka.restcommmspoc.service;
 
 import com.squareup.tape2.QueueFile;
 import dvoraka.restcommmspoc.controller.ControllerConstants;
+import dvoraka.restcommmspoc.data.QueueType;
 import dvoraka.restcommmspoc.data.message.TransferMessage;
 import dvoraka.restcommmspoc.data.message.TransferResponseMessage;
 import dvoraka.restcommmspoc.exception.NetworkException;
@@ -31,7 +32,10 @@ public class DefaultRestClientTransferService extends AbstractBaseService implem
 
     private final RestTemplate restTemplate;
 
+    public static final QueueType DEFAULT_QUEUE_TYPE = QueueType.IN_MEMORY;
     public static final String FS_QUEUE_NAME = "queue";
+
+    private final QueueType queueType;
 
     private final BlockingQueue<TransferMessage> waitingMessages;
     private final ExecutorService asyncService;
@@ -42,8 +46,10 @@ public class DefaultRestClientTransferService extends AbstractBaseService implem
 
 
     @Autowired
-    public DefaultRestClientTransferService(RestTemplate restTemplate) throws IOException {
+    public DefaultRestClientTransferService(RestTemplate restTemplate, QueueType queueType) throws IOException {
         this.restTemplate = requireNonNull(restTemplate);
+        this.queueType = queueType == null ? DEFAULT_QUEUE_TYPE : queueType;
+
         waitingMessages = new ArrayBlockingQueue<>(100);
         asyncService = Executors.newSingleThreadExecutor();
 
